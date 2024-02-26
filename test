@@ -1,23 +1,11 @@
-dm510@debian:~/home/dm510/linux-6.6.9$ gcc -o testasg1 testasg1.c 
 testasg1.c: In function ‘main’:
-testasg1.c:10:3: warning: implicit declaration of function ‘sys_dm510_msgbox_put’ [-Wimplicit-function-declaration]
-   10 |   sys_dm510_msgbox_put(in, strlen(in)+1);
+testasg1.c:11:3: warning: implicit declaration of function ‘sys_dm510_msgbox_put’ [-Wimplicit-function-declaration]
+   11 |   sys_dm510_msgbox_put(in, strlen(in)+1);
       |   ^~~~~~~~~~~~~~~~~~~~
-testasg1.c:10:28: warning: implicit declaration of function ‘strlen’ [-Wimplicit-function-declaration]
-   10 |   sys_dm510_msgbox_put(in, strlen(in)+1);
-      |                            ^~~~~~
-testasg1.c:3:1: note: include ‘<string.h>’ or provide a declaration of ‘strlen’
-    2 | #include "linux/unistd.h"
-  +++ |+#include <string.h>
-    3 | 
-testasg1.c:10:28: warning: incompatible implicit declaration of built-in function ‘strlen’ [-Wbuiltin-declaration-mismatch]
-   10 |   sys_dm510_msgbox_put(in, strlen(in)+1);
-      |                            ^~~~~~
-testasg1.c:10:28: note: include ‘<string.h>’ or provide a declaration of ‘strlen’
-testasg1.c:13:12: warning: implicit declaration of function ‘sys_dm510_msgbox_get’ [-Wimplicit-function-declaration]
-   13 |   msglen = sys_dm510_msgbox_get(msg, 50);
+testasg1.c:14:12: warning: implicit declaration of function ‘sys_dm510_msgbox_get’ [-Wimplicit-function-declaration]
+   14 |   msglen = sys_dm510_msgbox_get(msg, 50);
       |            ^~~~~~~~~~~~~~~~~~~~
-/usr/bin/ld: /tmp/ccumALt0.o: in function `main':
+/usr/bin/ld: /tmp/ccrdSqtJ.o: in function `main':
 testasg1.c:(.text+0x3a): undefined reference to `sys_dm510_msgbox_put'
 /usr/bin/ld: testasg1.c:(.text+0x50): undefined reference to `sys_dm510_msgbox_get'
 collect2: error: ld returned 1 exit status
