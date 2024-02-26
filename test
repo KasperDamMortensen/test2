@@ -1,11 +1,19 @@
-testasg1.c: In function ‘main’:
-testasg1.c:11:3: warning: implicit declaration of function ‘sys_dm510_msgbox_put’ [-Wimplicit-function-declaration]
-   11 |   sys_dm510_msgbox_put(in, strlen(in)+1);
-      |   ^~~~~~~~~~~~~~~~~~~~
-testasg1.c:14:12: warning: implicit declaration of function ‘sys_dm510_msgbox_get’ [-Wimplicit-function-declaration]
-   14 |   msglen = sys_dm510_msgbox_get(msg, 50);
-      |            ^~~~~~~~~~~~~~~~~~~~
-/usr/bin/ld: /tmp/ccrdSqtJ.o: in function `main':
-testasg1.c:(.text+0x3a): undefined reference to `sys_dm510_msgbox_put'
-/usr/bin/ld: testasg1.c:(.text+0x50): undefined reference to `sys_dm510_msgbox_get'
-collect2: error: ld returned 1 exit status
+#include "linux/kernel.h"
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include "arch/x86/include/generated/uapi/asm/unistd_64.h"
+
+int main(int argc, char** argv) {
+  char *in = "This is a stupid message.";
+  char msg[50];
+  int msglen;
+
+  /* Send a message containing 'in' */
+  syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
+
+  /* Read a message */
+  msglen = syscall(__NR_dm510_msgbox_get, msg, 50);
+  printf("%msglen",msglen);
+  return 0;
+}
