@@ -1,2 +1,2 @@
-#define __NR_dm510_msgbox_get 455
-#define __NR_dm510_msgbox_put 456
+455	common 	dm510_msgbox_get	sys_dm510_msgbox_get
+456	common	dm510_msgbox_put	sys_dm510_msgbox_put
