@@ -3,3 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "arch/x86/include/generated/uapi/asm/unistd_64.h"
+
+ printf("testing with too large length\n")
+  output = (syscall(__NR_dm510_msgbox_put,in,255999)
+  printf("Result is error code %d.\n",output);
