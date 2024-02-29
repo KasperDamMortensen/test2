@@ -7,8 +7,8 @@
 int main(int argc, char** argv) {
   char *in = "This is a stupid message.";
   char msg_small[1];
-  char msg[50]
-  char buffer_NULL = NULL;
+  char msg[50];
+  char *buffer_NULL = NULL;
   int output;
 
   output = syscall(__NR_dm510_msgbox_put, buffer_NULL, 50);
@@ -28,10 +28,10 @@ int main(int argc, char** argv) {
   printf("msg_get with a too small buffer outputs error code %d\n", output);
   
   output = syscall(__NR_dm510_msgbox_get, msg, 50);
-  prinf("Code for succesfull retrival from msg box: %d", output);
+  printf("Code for succesfull retrival from msg box: %d", output);
 
   output = syscall(__NR_dm510_msgbox_get, msg, 50);
-  prinf("Code for attempted retrieval from empty box: %d", output);
+  printf("Code for attempted retrieval from empty box: %d", output);
   
   return 0;
 }
