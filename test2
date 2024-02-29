@@ -13,11 +13,11 @@ int main(int argc, char** argv) {
 
 
   printf("tests order of output from the stack\n");
-  printf("The elements are put on the stack in the order:");
+  printf("The elements are put on the stack in the order:\n");
 
-  printf("%s\n",*in);
-  printf("%s\n",*in2);
-  printf("%s\n",*in3);
+  printf("%s\n", in);
+  printf("%s\n", in2);
+  printf("%s\n", in3);
 
   syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
 
