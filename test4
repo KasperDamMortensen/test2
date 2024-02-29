@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
   
   /* Send a message containing 'in' until memory is full */
   while (output <= 0){
-    syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
+    output = syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
   }
   printf("Error for max memory usage is:  %d\n", output);
  
