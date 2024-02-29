@@ -21,11 +21,11 @@ int main(int argc, char** argv) {
   /* Read a message */
   msglen = syscall(__NR_dm510_msgbox_get, msg, 50);
   printf("%s\n",msg);
-  return 0;
+
+  msglen = syscall(__NR_dm510_msgbox_get, msg, 50);
+  printf("%s\n",msg);
+
   msglen = syscall(__NR_dm510_msgbox_get, msg, 50);
   printf("%s\n",msg);
   return 0;
-  msglen = syscall(__NR_dm510_msgbox_get, msg, 50);
-  printf("%s\n",msg);
-  return 0; // do i need seperate buffers?
 }
