@@ -27,6 +27,11 @@ int main(int argc, char** argv) {
   output = (syscall(__NR_dm510_msgbox_get, msg_small, 50);
   printf("msg_get with a too small buffer outputs error code %d\n", output);
   
-  (syscall(__NR_dm510_msgbox_get, msg, 50);
+  output = (syscall(__NR_dm510_msgbox_get, msg, 50);
+  prinf("Code for succesfull retrival from msg box: %d", output);
+
+  output = (syscall(__NR_dm510_msgbox_get, msg, 50);
+  prinf("Code for attempted retrieval from empty box: %d", output);
+  
   return 0;
 }
