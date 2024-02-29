@@ -15,9 +15,9 @@ int main(int argc, char** argv) {
   printf("tests order of output from the stack\n");
   printf("The elements are put on the stack in the order:");
 
-  printf("%c\n",*in);
-  printf("%c\n",*in2);
-  printf("%c\n",*in3);
+  printf("%s\n",*in);
+  printf("%s\n",*in2);
+  printf("%s\n",*in3);
 
   syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
 
@@ -28,12 +28,12 @@ int main(int argc, char** argv) {
   printf("The elements are removed from the stack in the order:");
   /* Read a message */
   syscall(__NR_dm510_msgbox_get, msg, 50);
-  printf("%c\n",msg);
+  printf("%s\n",msg);
 
   syscall(__NR_dm510_msgbox_get, msg, 50);
-  printf("%c\n",msg);
+  printf("%s\n",msg);
 
   syscall(__NR_dm510_msgbox_get, msg, 50);
-  printf("%c\n",msg);
+  printf("%s\n",msg);
   return 0;
 }
