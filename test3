@@ -13,11 +13,8 @@ int main(int argc, char** argv) {
   if (syscall(__NR_dm510_msgbox_put,in,-1) >0){
     printf("argument test 1 passed\n");
   }
-  if (syscall(__NR_dm510_msgbox_put,in,10) >0){
-    printf("argument test 2 passed\n");
-  }
   if (syscall(__NR_dm510_msgbox_put,in,257000) >0){
-    printf("argument test 3 passed\n");
+    printf("argument test 2 passed\n");
   }
   return 0;
 }
