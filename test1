@@ -6,14 +6,17 @@
 
 int main(int argc, char** argv) {
   char *in = "This is a stupid message.";
-  char msg[50];
+  char msg[1];
+  buffer_NULL = NULL;
   int msglen;
 
   /* Send a message containing 'in' */
   syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
 
   /* Read a message */
-  msglen = syscall(__NR_dm510_msgbox_get, msg, 50);
-  printf("%s\n",msg);
+  if (syscall(__NR_dm510_msgbox_get, msg, 50) ){
+    printf("message too big for buffer\n")
+  }
+  
   return 0;
 }
