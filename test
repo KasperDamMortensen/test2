@@ -81,6 +81,9 @@ int sys_dm510_msgbox_get( char* buffer, int length ) {
   }
   return -1;
 
+mount none /mnt/tmp -t hostfs -o /home/dm510/home/dm510/linux-6.6.9
+
+
 
 }
 
