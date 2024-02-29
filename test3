@@ -8,10 +8,18 @@ int main(int argc, char** argv) {
   char *in = "This is a stupid message.";
   char msg[50];
   int msglen;
+  char
 
   /* Send a message containing 'in' */
-  syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
-
+  if (syscall(__NR_dm510_msgbox_put,in,-1) >0){
+    printf("argument test 1 passed\n")
+  }
+  if (syscall(__NR_dm510_msgbox_put,in,10) >0){
+    printf("argument test 2 passed\n")
+  }
+  if (syscall(__NR_dm510_msgbox_put,in,257000) >0){
+    printf("argument test 3 passed\n")
+  }
   /* Read a message */
   msglen = syscall(__NR_dm510_msgbox_get, msg, 50);
   printf("%s\n",msg);
