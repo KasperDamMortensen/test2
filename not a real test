@@ -3,9 +3,17 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "arch/x86/include/generated/uapi/asm/unistd_64.h"
-char *in3 = "three.";
+int main(int argc, char** argv) {
+  char *in = "one.";
+  char *in2 = "two.";
+  char *in3 = "three.";
   char msg[50];
+  int msglen;
+int output;
 
- printf("testing with too large length\n");
-  output = (syscall(__NR_dm510_msgbox_put,in,255999);
+  printf("testing with too large length\n");
+  output = syscall(__NR_dm510_msgbox_put,in,255999);
   printf("Result is error code %d.\n",output);
+  output = syscall(__NR_dm510_msgbox_get,msg,50);
+
+}
