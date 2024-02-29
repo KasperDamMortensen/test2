@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   output = (syscall(__NR_dm510_msgbox_put, buffer_NULL, 50);
   printf("msg_put with a NULL buffer outputs error code %d\n", output);
 
-  output = (syscall(__NR_dm510_msgbox_put, msg_small, 2000);
+  output = (syscall(__NR_dm510_msgbox_put, msg_small, 128);
   printf("msg_put with a too small buffer outputs error code %d\n", output);
 
   /* Send a message containing 'in' */
