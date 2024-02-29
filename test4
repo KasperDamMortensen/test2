@@ -14,12 +14,12 @@ int main(int argc, char** argv) {
   while (output >= 0){
     output = syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
   }
-  printf("Error for max memory usage is:  %d\n", output);
  
 
   while (output_2 <= 0){
     output_2 = syscall(__NR_dm510_msgbox_get, msg, 50);
   }
   printf("msg box empty.\n");
+  printf("Error for max memory usage is:  %d\n", output);
   return 0;
 }
