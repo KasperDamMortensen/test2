@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   printf("Result is error code: %d.\n",output);
   
   printf("testing with too large length\n");
-  output = (syscall(__NR_dm510_msgbox_put,in,128);
+  output = syscall(__NR_dm510_msgbox_put,in,128);
   printf("Result is error code %d.\n",output);
 
   return 0;
