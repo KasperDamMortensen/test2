@@ -16,6 +16,8 @@ int main(int argc, char** argv) {
 
   /* Send a message containing 'in' */
   syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
+ /* Send a message containing 'in' */
+  syscall(__NR_dm510_msgbox_put,in,strlen(in)+1);
 
   /* Read a message */
 
