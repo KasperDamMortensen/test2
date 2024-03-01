@@ -1,89 +1,513 @@
-#include "linux/unistd.h"
-#include "linux/kernel.h"
-#include "linux/uaccess.h"
-#include "linux/slab.h"
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
 
-unsigned long flags;
-typedef struct _msg_t msg_t;
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
 
-struct _msg_t{
-  msg_t* previous;
-  int length;
-  char* message;
-};
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
 
-static msg_t *bottom = NULL;
-static msg_t *top = NULL;
-asmlinkage
-int sys_dm510_msgbox_put( char *buffer, int length ) {
-  if (!access_ok(buffer, length)){
-    return -14;
-  }
-  if (length<0){
-    return -22; // check efter om det er det rigtige tal
-  }
-  msg_t* msg = kmalloc(sizeof(msg_t), GFP_KERNEL);
-  if (msg == NULL){
-    kfree(msg);
-    return -12;
-  }
-  msg->previous = NULL;
-  msg->length = length;
-  msg->message = kmalloc(length, GFP_KERNEL);
-  if (msg->message == NULL){
-    kfree(msg->message);
-    return -12;
-  }
-  
-  if (copy_from_user(msg->message, buffer, length) != 0) {
-    kfree(msg);
-    kfree(msg->message);
-    return -1;  // Find det rigtige tal
-  }
-
-  local_irq_save(flags);
-  if (bottom == NULL) {
-    bottom = msg;
-    top = msg;
-  } else {
-    /* not empty stack */
-    msg->previous = top;
-    top = msg;
-  }
-  local_irq_restore(flags);
-  return 0;
-}
-asmlinkage
-int sys_dm510_msgbox_get( char* buffer, int length ) {
-  if(!access_ok(buffer, length)){
-    return -14;
-  }
-  if (length<0) {
-    return -22; //check efter
-  }
-  if (top != NULL) {
-    local_irq_save(flags);
-    msg_t* msg = top;
-    int mlength = msg->length;
-    top = msg->previous;
-
-    /* copy message */
-    if (copy_to_user(buffer, msg->message, mlength) != 0) {
-      return -1; // Find det rigtige tal
-    }
-
-    /* free memory */
-    kfree(msg->message);
-    kfree(msg);
-
-    local_irq_restore(flags);
-    return mlength;
-  }
-  return -1;
-
-mount none /mnt/tmp -t hostfs -o /home/dm510/home/dm510/linux-6.6.9
-
-
-
-}
-
+ _______________________
+< Welcome to DM510-2024 >
+ -----------------------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/
+                ||----w |
+                ||     ||
+Last login: Fri Mar  1 00:08:32 UTC 2024 on tty0
+root@dm510host:~# mount none /mnt/tmp -t hostfs -o/home/dm510/home/dm510/linux-6.6.9
+root@dm510host:~# cd /mnt/tmp
+root@dm510host:/mnt/tmp# ./test_1 
+msg_put with a NULL buffer outputs error code -22
+msg_get with a too small buffer outputs error code 26
+ msg_get with a NULL buffer outputs error code -14
+Code for succesfull retrival from msg box: -1
+Code for attempted retrieval from empty box: -1
+root@dm510host:/mnt/tmp# ./test_2
+tests order of output from the stack
+The elements are put on the stack in the order:
+one.
+two.
+three.
+The elements are removed from the stack in the order:
+three
+two.
+one.
+root@dm510host:/mnt/tmp# ./test_3
+testing with negative length
+Result is error code: -22.
+testing with too large length
+Result is error code 0.
+root@dm510host:/mnt/tmp# ./test_4
+init invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+CPU: 0 PID: 1 Comm: init Not tainted 6.6.9 #14
+Stack:
+ 603851d4 6044dfa4 648038e0 6036d522
+ 00000000 6044dfa4 60033407 603851d4
+ 00000001 600a6b47 64803910 6038c910
+Call Trace:
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600214d6>] show_stack+0x113/0x18b
+ [<603851d4>] ? _printk+0x0/0x94
+ [<6036d522>] ? dump_stack_print_info+0xe1/0xf0
+ [<60033407>] ? um_set_signals+0x0/0x3e
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<6038c910>] dump_stack_lvl+0x4a/0x58
+ [<6038c8c6>] ? dump_stack_lvl+0x0/0x58
+ [<6038c938>] dump_stack+0x1a/0x1c
+ [<600a6c20>] dump_header+0x8c/0x283
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a7062>] oom_kill_process+0x84/0x2f0
+ [<600b141d>] ? shrink_node+0x2a5/0x30c
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a78a3>] out_of_memory+0x43c/0x457
+ [<600b22bf>] ? try_to_free_pages+0x390/0x3a5
+ [<600d9b88>] ? get_page_from_freelist+0x0/0x68b
+ [<600da325>] __alloc_pages_may_oom+0x112/0x1e3
+ [<6003343d>] ? um_set_signals+0x36/0x3e
+ [<600daa46>] __alloc_pages_slowpath.constprop.0+0x2a4/0x69e
+ [<600ab054>] ? read_pages+0xe1/0x15c
+ [<600a44b1>] ? filemap_get_entry+0x0/0x99
+ [<600dafa5>] __alloc_pages+0x165/0x16e
+ [<600db620>] __folio_alloc+0x16/0x18
+ [<600a1a3e>] folio_alloc.constprop.0+0x16/0x18
+ [<600a46c9>] __filemap_get_folio+0x17f/0x209
+ [<600a49fc>] filemap_fault+0x2a9/0x5ad
+ [<600c2126>] __do_fault+0x27/0x91
+ [<600c5d48>] __handle_mm_fault+0x4ee/0x7ea
+ [<600c6151>] handle_mm_fault+0x10d/0x17c
+ [<600c8d37>] ? find_vma+0x24/0x26
+ [<6002260c>] handle_page_fault+0x173/0x2e6
+ [<60022924>] segv+0x160/0x31b
+ [<60022b8d>] segv_handler+0xae/0xb8
+ [<60038746>] ? restore_fp_registers+0x71/0x73
+ [<600361c1>] userspace+0x433/0x60f
+ [<60383ac0>] ? try_to_run_init_process+0x0/0x44
+ [<600202fb>] new_thread_handler+0xae/0xb0
+Mem-Info:
+active_anon:9 inactive_anon:799 isolated_anon:0
+ active_file:11 inactive_file:19 isolated_file:0
+ unevictable:0 dirty:0 writeback:0
+ slab_reclaimable:273 slab_unreclaimable:12856
+ mapped:1 shmem:105 pagetables:68
+ sec_pagetables:0 bounce:0
+ kernel_misc_reclaimable:0
+ free:239 free_pcp:10 free_cma:0
+Node 0 active_anon:36kB inactive_anon:3196kB active_file:44kB inactive_file:76kB unevictable:0kB isolated(anon):0kB isolated(file):0kB mapped:4kB dirty:0kB writeback:0kB shmem:420kB writeback_tmp:0kB kernel_stack:480kB pagetables:272kB sec_pagetables:0kB all_unreclaimable? yes
+Normal free:956kB boost:0kB min:964kB low:1204kB high:1444kB reserved_highatomic:0KB active_anon:36kB inactive_anon:3196kB active_file:44kB inactive_file:76kB unevictable:0kB writepending:0kB present:66820kB managed:58216kB mlocked:0kB bounce:0kB free_pcp:40kB local_pcp:40kB free_cma:0kB
+lowmem_reserve[]: 0 0
+Normal: 1*4kB (M) 11*8kB (UME) 12*16kB (UM) 7*32kB (M) 3*64kB (UM) 2*128kB (UM) 0*256kB 0*512kB 0*1024kB 0*2048kB 0*4096kB = 956kB
+135 total pagecache pages
+0 pages in swap cache
+Free swap  = 0kB
+Total swap = 0kB
+16705 pages RAM
+0 pages HighMem/MovableOnly
+2151 pages reserved
+Unreclaimable slab info:
+Name                      Used          Total
+bio-112                    4KB          4KB
+bio-200                    4KB          4KB
+mqueue_inode_cache          7KB          7KB
+hostfs_inode_info          7KB          7KB
+ip_fib_alias               3KB          3KB
+RAW                        7KB          7KB
+bio-240                    8KB          8KB
+request_queue             15KB         15KB
+bio-176                    4KB         19KB
+skbuff_small_head          7KB         39KB
+skbuff_head_cache          4KB         20KB
+file_lock_cache            3KB          3KB
+file_lock_ctx              3KB          3KB
+pde_opener                 3KB          3KB
+seq_file                   3KB          3KB
+sigqueue                   3KB          3KB
+shmem_inode_cache        437KB        437KB
+mnt_cache                  7KB          7KB
+vm_area_struct            50KB         55KB
+files_cache                8KB         15KB
+sighand_cache             76KB         92KB
+task_struct              161KB        228KB
+anon_vma                  13KB         19KB
+vmap_area                 27KB         27KB
+kmalloc-8k                32KB         32KB
+kmalloc-4k               220KB        224KB
+kmalloc-2k                80KB         80KB
+kmalloc-1k               272KB        280KB
+kmalloc-512               48KB         52KB
+kmalloc-256               91KB        104KB
+kmalloc-192               66KB         70KB
+kmalloc-128              615KB        616KB
+kmalloc-96                30KB         31KB
+kmalloc-64                31KB         44KB
+kmalloc-32             48696KB      48696KB
+kmalloc-16                 7KB          8KB
+kmalloc-8                  8KB          8KB
+kmem_cache_node            8KB          8KB
+kmem_cache                15KB         15KB
+Tasks state (memory values in pages):
+[  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+[    122]     0   122     5729      306    49152        0             0 systemd-udevd
+[    653]     0   653      895       55    32768        0             0 cron
+[    673]     0   673     1057       98    32768        0             0 login
+[    674]     0   674      624       31    28672        0             0 getty
+[    675]     0   675      624       31    28672        0             0 getty
+[    685]     0   685     1042      132    36864        0             0 bash
+[    694]     0   694      577       23    32768        0             0 test_4
+oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=systemd-udevd,pid=122,uid=0
+Out of memory: Killed process 122 (systemd-udevd) total-vm:22916kB, anon-rss:1220kB, file-rss:4kB, shmem-rss:0kB, UID:0 pgtables:48kB oom_score_adj:0
+init invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+CPU: 0 PID: 1 Comm: init Not tainted 6.6.9 #14
+Stack:
+ 603851d4 6044dfa4 648038e0 6036d522
+ 00000000 6044dfa4 60033407 603851d4
+ 00000001 600a6b47 64803910 6038c910
+Call Trace:
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600214d6>] show_stack+0x113/0x18b
+ [<603851d4>] ? _printk+0x0/0x94
+ [<6036d522>] ? dump_stack_print_info+0xe1/0xf0
+ [<60033407>] ? um_set_signals+0x0/0x3e
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<6038c910>] dump_stack_lvl+0x4a/0x58
+ [<6038c8c6>] ? dump_stack_lvl+0x0/0x58
+ [<6038c938>] dump_stack+0x1a/0x1c
+ [<600a6c20>] dump_header+0x8c/0x283
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a7062>] oom_kill_process+0x84/0x2f0
+ [<600b141d>] ? shrink_node+0x2a5/0x30c
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a78a3>] out_of_memory+0x43c/0x457
+ [<600b22bf>] ? try_to_free_pages+0x390/0x3a5
+ [<600d9b88>] ? get_page_from_freelist+0x0/0x68b
+ [<600da325>] __alloc_pages_may_oom+0x112/0x1e3
+ [<6003343d>] ? um_set_signals+0x36/0x3e
+ [<600daa46>] __alloc_pages_slowpath.constprop.0+0x2a4/0x69e
+ [<600ab054>] ? read_pages+0xe1/0x15c
+ [<600a44b1>] ? filemap_get_entry+0x0/0x99
+ [<600dafa5>] __alloc_pages+0x165/0x16e
+ [<600db620>] __folio_alloc+0x16/0x18
+ [<600a1a3e>] folio_alloc.constprop.0+0x16/0x18
+ [<600a46c9>] __filemap_get_folio+0x17f/0x209
+ [<600a49fc>] filemap_fault+0x2a9/0x5ad
+ [<600c2126>] __do_fault+0x27/0x91
+ [<600c5d48>] __handle_mm_fault+0x4ee/0x7ea
+ [<600c6151>] handle_mm_fault+0x10d/0x17c
+ [<600c8d37>] ? find_vma+0x24/0x26
+ [<6002260c>] handle_page_fault+0x173/0x2e6
+ [<60022924>] segv+0x160/0x31b
+ [<60022b8d>] segv_handler+0xae/0xb8
+ [<60038746>] ? restore_fp_registers+0x71/0x73
+ [<600361c1>] userspace+0x433/0x60f
+ [<60383ac0>] ? try_to_run_init_process+0x0/0x44
+ [<600202fb>] new_thread_handler+0xae/0xb0
+Mem-Info:
+active_anon:9 inactive_anon:494 isolated_anon:0
+ active_file:12 inactive_file:39 isolated_file:0
+ unevictable:0 dirty:0 writeback:0
+ slab_reclaimable:273 slab_unreclaimable:13160
+ mapped:1 shmem:105 pagetables:56
+ sec_pagetables:0 bounce:0
+ kernel_misc_reclaimable:0
+ free:241 free_pcp:2 free_cma:0
+Node 0 active_anon:36kB inactive_anon:1976kB active_file:48kB inactive_file:156kB unevictable:0kB isolated(anon):0kB isolated(file):0kB mapped:4kB dirty:0kB writeback:0kB shmem:420kB writeback_tmp:0kB kernel_stack:464kB pagetables:224kB sec_pagetables:0kB all_unreclaimable? no
+Normal free:964kB boost:0kB min:964kB low:1204kB high:1444kB reserved_highatomic:0KB active_anon:36kB inactive_anon:1976kB active_file:48kB inactive_file:156kB unevictable:0kB writepending:0kB present:66820kB managed:58216kB mlocked:0kB bounce:0kB free_pcp:8kB local_pcp:8kB free_cma:0kB
+lowmem_reserve[]: 0 0
+Normal: 1*4kB (U) 4*8kB (ME) 10*16kB (M) 6*32kB (UM) 5*64kB (UM) 2*128kB (M) 0*256kB 0*512kB 0*1024kB 0*2048kB 0*4096kB = 964kB
+156 total pagecache pages
+0 pages in swap cache
+Free swap  = 0kB
+Total swap = 0kB
+16705 pages RAM
+0 pages HighMem/MovableOnly
+2151 pages reserved
+Unreclaimable slab info:
+Name                      Used          Total
+bio-112                    4KB          4KB
+bio-200                    4KB          4KB
+mqueue_inode_cache          7KB          7KB
+hostfs_inode_info          7KB          7KB
+ip_fib_alias               3KB          3KB
+RAW                        7KB          7KB
+bio-240                    8KB          8KB
+request_queue             15KB         15KB
+bio-176                    4KB         19KB
+skbuff_small_head          7KB         39KB
+skbuff_head_cache          4KB         20KB
+file_lock_cache            3KB          3KB
+file_lock_ctx              3KB          3KB
+pde_opener                 3KB          3KB
+seq_file                   3KB          3KB
+sigqueue                   3KB          3KB
+shmem_inode_cache        437KB        437KB
+mnt_cache                  7KB          7KB
+vm_area_struct            41KB         51KB
+files_cache                8KB         15KB
+sighand_cache             76KB         92KB
+task_struct              156KB        228KB
+anon_vma                  12KB         19KB
+vmap_area                 26KB         27KB
+kmalloc-8k                32KB         32KB
+kmalloc-4k               220KB        224KB
+kmalloc-2k                80KB         80KB
+kmalloc-1k               273KB        280KB
+kmalloc-512               48KB         52KB
+kmalloc-256               83KB        100KB
+kmalloc-192               66KB         70KB
+kmalloc-128              614KB        616KB
+kmalloc-96                30KB         31KB
+kmalloc-64                28KB         44KB
+kmalloc-32             49920KB      49920KB
+kmalloc-16                 7KB          8KB
+kmalloc-8                  8KB          8KB
+kmem_cache_node            8KB          8KB
+kmem_cache                15KB         15KB
+Tasks state (memory values in pages):
+[  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+[    653]     0   653      895       55    32768        0             0 cron
+[    673]     0   673     1057       98    32768        0             0 login
+[    674]     0   674      624       31    28672        0             0 getty
+[    675]     0   675      624       31    28672        0             0 getty
+[    685]     0   685     1042      132    36864        0             0 bash
+[    694]     0   694      577       23    32768        0             0 test_4
+oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=bash,pid=685,uid=0
+Out of memory: Killed process 685 (bash) total-vm:4168kB, anon-rss:524kB, file-rss:4kB, shmem-rss:0kB, UID:0 pgtables:36kB oom_score_adj:0
+login invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+CPU: 0 PID: 673 Comm: login Not tainted 6.6.9 #14
+Stack:
+ 603851d4 6044dfa4 651cb8e0 6036d522
+ 00000000 6044dfa4 60033407 603851d4
+ 00000001 600a6b47 651cb910 6038c910
+Call Trace:
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600214d6>] show_stack+0x113/0x18b
+ [<603851d4>] ? _printk+0x0/0x94
+ [<6036d522>] ? dump_stack_print_info+0xe1/0xf0
+ [<60033407>] ? um_set_signals+0x0/0x3e
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<6038c910>] dump_stack_lvl+0x4a/0x58
+ [<6038c8c6>] ? dump_stack_lvl+0x0/0x58
+ [<6038c938>] dump_stack+0x1a/0x1c
+ [<600a6c20>] dump_header+0x8c/0x283
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a7062>] oom_kill_process+0x84/0x2f0
+ [<600b141d>] ? shrink_node+0x2a5/0x30c
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a78a3>] out_of_memory+0x43c/0x457
+ [<600b22bf>] ? try_to_free_pages+0x390/0x3a5
+ [<600d9b88>] ? get_page_from_freelist+0x0/0x68b
+ [<600da325>] __alloc_pages_may_oom+0x112/0x1e3
+ [<6003343d>] ? um_set_signals+0x36/0x3e
+ [<600daa46>] __alloc_pages_slowpath.constprop.0+0x2a4/0x69e
+ [<600ab054>] ? read_pages+0xe1/0x15c
+ [<600a44b1>] ? filemap_get_entry+0x0/0x99
+ [<600dafa5>] __alloc_pages+0x165/0x16e
+ [<600db620>] __folio_alloc+0x16/0x18
+ [<600a1a3e>] folio_alloc.constprop.0+0x16/0x18
+ [<600a46c9>] __filemap_get_folio+0x17f/0x209
+ [<600a49fc>] filemap_fault+0x2a9/0x5ad
+ [<600c2126>] __do_fault+0x27/0x91
+ [<600c5d48>] __handle_mm_fault+0x4ee/0x7ea
+ [<600c6151>] handle_mm_fault+0x10d/0x17c
+ [<600c8d37>] ? find_vma+0x24/0x26
+ [<6002260c>] handle_page_fault+0x173/0x2e6
+ [<60038aba>] ? arch_switch_to+0x2b/0x2e
+ [<60022924>] segv+0x160/0x31b
+ [<60022b8d>] segv_handler+0xae/0xb8
+ [<60038746>] ? restore_fp_registers+0x71/0x73
+ [<600361c1>] userspace+0x433/0x60f
+ [<6002038f>] fork_handler+0x92/0x94
+Mem-Info:
+active_anon:9 inactive_anon:363 isolated_anon:0
+ active_file:11 inactive_file:27 isolated_file:1
+ unevictable:0 dirty:0 writeback:0
+ slab_reclaimable:272 slab_unreclaimable:13313
+ mapped:1 shmem:105 pagetables:47
+ sec_pagetables:0 bounce:0
+ kernel_misc_reclaimable:0
+ free:241 free_pcp:2 free_cma:0
+Node 0 active_anon:36kB inactive_anon:1452kB active_file:44kB inactive_file:108kB unevictable:0kB isolated(anon):0kB isolated(file):4kB mapped:4kB dirty:0kB writeback:0kB shmem:420kB writeback_tmp:0kB kernel_stack:448kB pagetables:188kB sec_pagetables:0kB all_unreclaimable? yes
+Normal free:964kB boost:0kB min:964kB low:1204kB high:1444kB reserved_highatomic:0KB active_anon:36kB inactive_anon:1452kB active_file:44kB inactive_file:108kB unevictable:0kB writepending:0kB present:66820kB managed:58216kB mlocked:0kB bounce:0kB free_pcp:8kB local_pcp:8kB free_cma:0kB
+lowmem_reserve[]: 0 0
+Normal: 1*4kB (U) 10*8kB (ME) 11*16kB (UM) 6*32kB (UM) 4*64kB (UM) 2*128kB (M) 0*256kB 0*512kB 0*1024kB 0*2048kB 0*4096kB = 964kB
+144 total pagecache pages
+0 pages in swap cache
+Free swap  = 0kB
+Total swap = 0kB
+16705 pages RAM
+0 pages HighMem/MovableOnly
+2151 pages reserved
+Unreclaimable slab info:
+Name                      Used          Total
+bio-112                    4KB          4KB
+bio-200                    4KB          4KB
+mqueue_inode_cache          7KB          7KB
+hostfs_inode_info          7KB          7KB
+ip_fib_alias               3KB          3KB
+RAW                        7KB          7KB
+bio-240                    8KB          8KB
+request_queue             15KB         15KB
+bio-176                    4KB         19KB
+skbuff_small_head          7KB         39KB
+skbuff_head_cache          4KB         20KB
+file_lock_cache            3KB          3KB
+file_lock_ctx              3KB          3KB
+pde_opener                 3KB          3KB
+seq_file                   3KB          3KB
+sigqueue                   3KB          3KB
+shmem_inode_cache        437KB        437KB
+mnt_cache                  7KB          7KB
+vm_area_struct            37KB         47KB
+files_cache                8KB         15KB
+sighand_cache             76KB         92KB
+task_struct              156KB        228KB
+anon_vma                  11KB         19KB
+vmap_area                 26KB         27KB
+kmalloc-8k                32KB         32KB
+kmalloc-4k               220KB        224KB
+kmalloc-2k                80KB         80KB
+kmalloc-1k               273KB        280KB
+kmalloc-512               48KB         52KB
+kmalloc-256               83KB        100KB
+kmalloc-192               66KB         70KB
+kmalloc-128              614KB        616KB
+kmalloc-96                30KB         31KB
+kmalloc-64                27KB         44KB
+kmalloc-32             50536KB      50536KB
+kmalloc-16                 7KB          8KB
+kmalloc-8                  8KB          8KB
+kmem_cache_node            8KB          8KB
+kmem_cache                15KB         15KB
+Tasks state (memory values in pages):
+[  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+[    653]     0   653      895       55    32768        0             0 cron
+[    673]     0   673     1057       98    32768        0             0 login
+[    674]     0   674      624       31    28672        0             0 getty
+[    675]     0   675      624       31    28672        0             0 getty
+[    694]     0   694      577       23    32768        0             0 test_4
+oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=login,pid=673,uid=0
+Out of memory: Killed process 673 (login) total-vm:4228kB, anon-rss:388kB, file-rss:4kB, shmem-rss:0kB, UID:0 pgtables:32kB oom_score_adj:0
+init invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+CPU: 0 PID: 1 Comm: init Not tainted 6.6.9 #14
+Stack:
+ 603851d4 6044dfa4 648038e0 6036d522
+ 00000000 6044dfa4 60033407 603851d4
+ 00000001 600a6b47 64803910 6038c910
+Call Trace:
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600214d6>] show_stack+0x113/0x18b
+ [<603851d4>] ? _printk+0x0/0x94
+ [<6036d522>] ? dump_stack_print_info+0xe1/0xf0
+ [<60033407>] ? um_set_signals+0x0/0x3e
+ [<603851d4>] ? _printk+0x0/0x94
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<6038c910>] dump_stack_lvl+0x4a/0x58
+ [<6038c8c6>] ? dump_stack_lvl+0x0/0x58
+ [<6038c938>] dump_stack+0x1a/0x1c
+ [<600a6c20>] dump_header+0x8c/0x283
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a7062>] oom_kill_process+0x84/0x2f0
+ [<600b141d>] ? shrink_node+0x2a5/0x30c
+ [<600a6b47>] ? oom_unkillable_task.isra.0+0x0/0xf
+ [<600a78a3>] out_of_memory+0x43c/0x457
+ [<600b22bf>] ? try_to_free_pages+0x390/0x3a5
+ [<600d9b88>] ? get_page_from_freelist+0x0/0x68b
+ [<600da325>] __alloc_pages_may_oom+0x112/0x1e3
+ [<6003343d>] ? um_set_signals+0x36/0x3e
+ [<600daa46>] __alloc_pages_slowpath.constprop.0+0x2a4/0x69e
+ [<600dafa5>] ? __alloc_pages+0x165/0x16e
+ [<600a44b1>] ? filemap_get_entry+0x0/0x99
+ [<600dafa5>] __alloc_pages+0x165/0x16e
+ [<600db620>] __folio_alloc+0x16/0x18
+ [<600a1a3e>] folio_alloc.constprop.0+0x16/0x18
+ [<600a46c9>] __filemap_get_folio+0x17f/0x209
+ [<600a49fc>] filemap_fault+0x2a9/0x5ad
+ [<600c2126>] __do_fault+0x27/0x91
+ [<600c5d48>] __handle_mm_fault+0x4ee/0x7ea
+ [<600c6151>] handle_mm_fault+0x10d/0x17c
+ [<600c8d37>] ? find_vma+0x24/0x26
+ [<6002260c>] handle_page_fault+0x173/0x2e6
+ [<60048c64>] ? get_signal+0x0/0x8f4
+ [<60022924>] segv+0x160/0x31b
+ [<60022b8d>] segv_handler+0xae/0xb8
+ [<60038746>] ? restore_fp_registers+0x71/0x73
+ [<600361c1>] userspace+0x433/0x60f
+ [<60383ac0>] ? try_to_run_init_process+0x0/0x44
+ [<600202fb>] new_thread_handler+0xae/0xb0
+Mem-Info:
+active_anon:8 inactive_anon:267 isolated_anon:0
+ active_file:11 inactive_file:28 isolated_file:1
+ unevictable:0 dirty:0 writeback:0
+ slab_reclaimable:272 slab_unreclaimable:13311
+ mapped:1 shmem:105 pagetables:39
+ sec_pagetables:0 bounce:0
+ kernel_misc_reclaimable:0
+ free:238 free_pcp:114 free_cma:0
+Node 0 active_anon:32kB inactive_anon:1068kB active_file:44kB inactive_file:112kB unevictable:0kB isolated(anon):0kB isolated(file):4kB mapped:4kB dirty:0kB writeback:0kB shmem:420kB writeback_tmp:0kB kernel_stack:432kB pagetables:156kB sec_pagetables:0kB all_unreclaimable? yes
+Normal free:952kB boost:0kB min:964kB low:1204kB high:1444kB reserved_highatomic:0KB active_anon:32kB inactive_anon:1068kB active_file:44kB inactive_file:112kB unevictable:0kB writepending:0kB present:66820kB managed:58216kB mlocked:0kB bounce:0kB free_pcp:456kB local_pcp:456kB free_cma:0kB
+lowmem_reserve[]: 0 0
+Normal: 0*4kB 11*8kB (UME) 10*16kB (M) 6*32kB (UM) 4*64kB (UM) 2*128kB (M) 0*256kB 0*512kB 0*1024kB 0*2048kB 0*4096kB = 952kB
+145 total pagecache pages
+0 pages in swap cache
+Free swap  = 0kB
+Total swap = 0kB
+16705 pages RAM
+0 pages HighMem/MovableOnly
+2151 pages reserved
+Unreclaimable slab info:
+Name                      Used          Total
+bio-112                    4KB          4KB
+bio-200                    4KB          4KB
+mqueue_inode_cache          7KB          7KB
+hostfs_inode_info          7KB          7KB
+ip_fib_alias               3KB          3KB
+RAW                        7KB          7KB
+bio-240                    8KB          8KB
+request_queue             15KB         15KB
+bio-176                    4KB         19KB
+skbuff_small_head          7KB         39KB
+skbuff_head_cache          4KB         20KB
+file_lock_cache            3KB          3KB
+file_lock_ctx              3KB          3KB
+pde_opener                 3KB          3KB
+seq_file                   3KB          3KB
+sigqueue                   3KB          3KB
+shmem_inode_cache        437KB        437KB
+mnt_cache                  7KB          7KB
+vm_area_struct            20KB         39KB
+files_cache                8KB         15KB
+sighand_cache             76KB         92KB
+task_struct              156KB        228KB
+anon_vma                   9KB         19KB
+vmap_area                 26KB         27KB
+kmalloc-8k                32KB         32KB
+kmalloc-4k               220KB        224KB
+kmalloc-2k                80KB         80KB
+kmalloc-1k               273KB        280KB
+kmalloc-512               48KB         52KB
+kmalloc-256               74KB        100KB
+kmalloc-192               66KB         70KB
+kmalloc-128              614KB        616KB
+kmalloc-96                30KB         31KB
+kmalloc-64                24KB         44KB
+kmalloc-32             50535KB      50536KB
+kmalloc-16                 7KB          8KB
+kmalloc-8                  8KB          8KB
+kmem_cache_node            8KB          8KB
+kmem_cache                15KB         15KB
+Tasks state (memory values in pages):
+[  pid  ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+[    653]     0   653      895       55    32768        0             0 cron
+[    674]     0   674      624       31    28672        0             0 getty
+[    675]     0   675      624       31    28672        0             0 getty
+[    694]     0   694      577       23    32768        0             0 test_4
+oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),task=cron,pid=653,uid=0
+Out of memory: Killed process 653 (cron) total-vm:3580kB, anon-rss:216kB, file-rss:4kB, shmem-rss:0kB, UID:0 pgtables:32kB oom_score_adj:0
